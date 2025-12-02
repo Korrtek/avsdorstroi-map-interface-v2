@@ -1,0 +1,38 @@
+.createMarkButton {
+  width: 100%;
+  padding: 10px 5px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 700;
+  user-select: none;
+  &:hover {
+    outline: none;
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    .svg {
+      color: var(--chart-3);
+      transition: all 0.2s ease;
+    }
+  }
+}
+
+.buttonWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.svg {
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.title {
+  width: 100%;
+  text-align: center;
+}

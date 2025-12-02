@@ -1,0 +1,30 @@
+.button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  width: 100%;
+  padding: 20px 40px 20px 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.15s ease;
+  font-size: 24px;
+  color: var(--foreground);
+  font-weight: 700;
+  &:hover {
+    outline: none;
+    border-color: var(--chart-3);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px); // Легкое опускание
+    background: var(--chart-4); // Изменение цвета фона
+    border-color: var(--chart-4); // Изменение цвета рамки
+  }
+  min-width: 40dvh;
+}

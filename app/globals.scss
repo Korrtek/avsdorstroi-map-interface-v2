@@ -1,7 +1,6 @@
 @use '../public/style/normalize';
 // Подключил нормализацию стилей из отдельного фаила, чтобы не засорять глобальные
 
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: var(--background);
@@ -66,7 +65,7 @@ body {
   --sidebar-ring: oklch(0.439 0 0);
   overflow: hidden;
 }
-// Стили для темной темы
+
 .dark {
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -100,4 +99,38 @@ body {
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+// Для элементов напишу стили в глобале, потом перенести в стиль компонента
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  background-color: var(--background) !important;
+
+  span {
+    color: var(--foreground) !important;
+  }
+}
+
+.leaflet-control,
+.leaflet-control-container {
+  border-radius: var(--radius) !important;
 }

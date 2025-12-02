@@ -1,0 +1,37 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.simpleThemeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--card-bg);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  &:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: rotate(15deg);
+  }
+}
+
+.toggleText {
+  font-weight: 500;
+}

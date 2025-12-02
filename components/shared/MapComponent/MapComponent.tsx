@@ -12,14 +12,14 @@ L.Icon.Default.mergeOptions({
 
 interface MapComponentProps {
   markerPosition: [number, number]
-
+  onMapClick: (lat: number, lng: number) => void
   zoom?: number
   className?: string
 }
 
 export const MapComponent: React.FC<MapComponentProps> = ({
   markerPosition,
-  
+  onMapClick,
   zoom = 13,
 }) =>  {
     // ссылки на Dom элементы
@@ -42,6 +42,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       .addTo(mapRef.current)
       
 
+    mapRef.current.on('click', (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng
+      onMapClick(lat, lng)
+    })
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove()
@@ -62,3 +67,5 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
   return <div ref={mapContainerRef} className={styles.map} />
 }
+
+export default MapComponent

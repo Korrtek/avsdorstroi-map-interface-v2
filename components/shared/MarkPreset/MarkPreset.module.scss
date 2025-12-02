@@ -1,0 +1,48 @@
+.markPreset {
+  width: 100%;
+  padding: 5px 5px 10px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  &:hover {
+    outline: none;
+    border-color: var(---foreground);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+  }
+}
+
+.buttonWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 5px;
+}
+
+.input {
+  background-color: transparent;
+  border: none;
+  margin-left: 4dvw;
+  &:focus {
+    border: none;
+    outline: none;
+  }
+  cursor: pointer;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.svg:hover {
+  color: var(--destructive);
+  transition: all 0.2s ease;
+}
+
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -5,3 +5,50 @@
   gap: 5px;
   width: 100%;
 }
+
+.presetWrapper {
+  // background-color: var(--background);
+  width: 100%;
+  overflow: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-right: 1px;
+  max-height: 76vh;
+}
+
+.markPresetWrapper {
+  width: 100%;
+  overflow: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-right: 1px;
+  max-height: 76vh;
+  &::-webkit-scrollbar {
+    width: 4px;
+    border-radius: var(--radius);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--foreground);
+    border-radius: 1px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground);
+  }
+}
