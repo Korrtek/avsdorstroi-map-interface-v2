@@ -14,6 +14,7 @@ interface MarkData {
   workingHours: string
   companyName: string
 }
+// Данные решил хранить в localStorage, без создания бэка
 // По этому ключу будет сохраняться форма в localStorage
 const STORAGE_KEY = 'map-marks-data'
 
@@ -52,15 +53,6 @@ export default function Home() {
       setActiveMarkId(loadedMarks[0].id)
     }
   }, [])
-
-  // Сохранение в localStorage при изменении marks
-  useEffect(() => {
-    if (marks.length > 0) {
-      saveMarksToStorage(marks)
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  }, [marks])
 
   // Находим активную метку
   const activeMark = marks.find((mark) => mark.id === activeMarkId) || null

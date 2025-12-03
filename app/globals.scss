@@ -1,18 +1,6 @@
 @use '../public/style/normalize';
 // Подключил нормализацию стилей из отдельного фаила, чтобы не засорять глобальные
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--background);
-    --foreground: var(--foreground);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
 
 html,
 body {
@@ -30,7 +18,7 @@ body {
 }
 
 :root {
-  --radius: 0.65rem;
+ --radius: 0.65rem;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
@@ -63,11 +51,13 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
-  overflow: hidden;
+    overflow: hidden;
 }
 
-.dark {
-  --background: oklch(1 0 0);
+
+.light {
+  --radius: 0.65rem;
+ --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-bg: #eff0f2;
@@ -99,7 +89,18 @@ body {
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.708 0 0);
+    overflow: hidden;
+  
 }
+
+
+
+
+
+
+
+
+
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;

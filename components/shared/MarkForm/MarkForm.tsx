@@ -180,7 +180,7 @@ const validatePhone = (phone: string): boolean => {
   return /^\+\d{11}$/.test(phone)
 }
 
-  // Обработчик отправки формы
+  // Обработчик "отправки" формы
   const handleSubmit = () => {
   const isEmailValid = validateEmail(formData.email || '')
   const isPhoneValid = validatePhone(formData.phone || '')
@@ -225,6 +225,7 @@ const validatePhone = (phone: string): boolean => {
                         : undefined
                     }
                     label="Широта"
+                    
                   />
                 </div>
                 <div className={styles.coordinateInput}> {/* Контейнер для поля долготы */}
@@ -294,13 +295,6 @@ const validatePhone = (phone: string): boolean => {
               >
                 Сохранить Метку
               </Button>
-
-              {/* Сообщение об ошибке координат */}
-              {!isValidCoords && (
-                <div className={styles.errorMessage}>
-                  Исправьте координаты для сохранения
-                </div>
-              )}
 
               {/* Сообщение о сохраненных изменениях */}
               {!hasUnsavedChanges && isValidCoords && (

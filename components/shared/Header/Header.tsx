@@ -1,42 +1,21 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import styles from './Header.module.scss'
 export const Header: React.FC = () => {
-  const [isDarkTheme, setIsDarkTheme] = useState(true)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-    const savedTheme = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)',
-    ).matches
-
-    if (savedTheme === 'light') {
-      setIsDarkTheme(false)
-    } else if (savedTheme === 'dark') {
-      setIsDarkTheme(true)
-      document.documentElement.classList.add('dark')
-    } else if (prefersDark) {
-      setIsDarkTheme(true)
-      document.documentElement.classList.add('dark')
-    }
-  }, [])
+  const [isLightTheme, setIsLightTheme] = useState(false)
 
   const toggleTheme = () => {
-    const newTheme = !isDarkTheme
-    setIsDarkTheme(newTheme)
+    const newTheme = !isLightTheme
+    setIsLightTheme(newTheme)
 
     if (newTheme) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
       localStorage.setItem('theme', 'light')
+    } else {
+      document.documentElement.classList.remove('light')
+      localStorage.setItem('theme', 'dark')
     }
   }
-
-  if (!isMounted) return null
 
   return (
     <div className={styles.header}>
@@ -44,7 +23,7 @@ export const Header: React.FC = () => {
         className={styles.simpleThemeToggle}
         onClick={toggleTheme}
       >
-        {isDarkTheme ? (
+        {isLightTheme ? (
           // Иконка солнца для светлой темы
           <svg
             width="20"
