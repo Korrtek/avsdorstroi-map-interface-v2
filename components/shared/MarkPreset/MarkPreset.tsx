@@ -13,10 +13,13 @@ interface MarkPresetProps {
   className?: string
 }
 
+
+
+
 export const MarkPreset: React.FC<MarkPresetProps> = ({
   markId,
   className,
-  markTitle,
+  markTitle ,
   isNew = false,
   isActive = false,
   onClick,
@@ -26,7 +29,7 @@ export const MarkPreset: React.FC<MarkPresetProps> = ({
   const [title, setTitle] = useState(markTitle)
   const [isEditing, setIsEditing] = useState(isNew)
 
-  // Синхронизация title при изменении markTitle извне
+  // Синхронизация title при изменении markTitle
   useEffect(() => {
     if (!isEditing) {
       setTitle(markTitle)
@@ -34,6 +37,7 @@ export const MarkPreset: React.FC<MarkPresetProps> = ({
   }, [markTitle, isEditing])
 
   const handleDelete = (e: React.MouseEvent) => {
+    // остановка всплытия
     e.stopPropagation()
     if (onDelete) {
       onDelete(markId)

@@ -8,7 +8,7 @@ import { MarkFormData } from '../types/FormData'
 import dynamic from 'next/dynamic'
 // Библиотеке leaflet требуется доступ к глобальному объекту window, 
 // поэтому отключили рендер на сервере
-const MapComponent = dynamic(() => import('@/components/shared/MapComponent/MapComponent'), {
+const MapComponent = dynamic(() => import('../MapComponent/MapComponent'), {
   ssr: false, // Отключаю рендеринг на сервере
 })
 

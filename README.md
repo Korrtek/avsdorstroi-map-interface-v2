@@ -1,5 +1,5 @@
 
-Для просмотра посетите https://avsdoorstoi-map.netlify.app/
+Для просмотра посетите https://avsdorstroi-map-interface.vercel.app/
 Начало работы
 Сначала запустите сервер разработки:
 ```bash
