@@ -121,6 +121,19 @@ export default function Home() {
     )
   }
 
+
+// автосейв координат метки
+ useEffect(() => {
+    if (marks.length > 0) {
+      saveMarksToStorage(marks)
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }, [marks])
+
+
+
+
   // Сохранение данных из формы
   const handleSaveMark = (formData: any) => {
     if (activeMarkId) {
