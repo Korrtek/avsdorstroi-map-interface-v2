@@ -6,15 +6,16 @@ import { Container } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { MarkFormData } from '../types/FormData'
 import dynamic from 'next/dynamic'
-// Библиотеке leaflet требуется доступ к глобальному объекту window, 
-// поэтому отключили рендер на сервере
+
+// Динамическая загрузка карты
 const MapComponent = dynamic(() => import('../MapComponent/MapComponent'), {
-  ssr: false, // Отключаю рендеринг на сервере
+  ssr: false,
+  loading: () => <div className={styles.mapLoading}>Загрузка карты...</div>
 })
 
-// Интерфейс пропсов компонента
-interface InitialMarkFormData {
-  initialData?: { // Начальные данные формы
+interface MarkFormProps {
+  initialData?: {
+    id: string
     name: string
     latitude: number
     longitude: number
@@ -23,156 +24,166 @@ interface InitialMarkFormData {
     workingHours: string
     companyName: string
   }
-  onSave?: (data: MarkFormData) => void // Колбэк при сохранении
-  onLocationChange?: (lat: number, lng: number) => void // Колбэк при изменении местоположения
+  markers?: Array<{
+    id: string
+    position: [number, number]
+    title?: string
+  }>
+  activeMarkerId?: string | null
+  onSave?: (data: MarkFormData) => void
+  onLocationChange?: (lat: number, lng: number) => void
+  onMarkerClick?: (markerId: string) => void
 }
 
-// Экспорт компонента формы маркера
-export const MarkForm: React.FC<InitialMarkFormData> = ({
-  initialData = { // Значения по умолчанию для начальных данных
+export const MarkForm: React.FC<MarkFormProps> = ({
+  initialData = {
+    id: '',
     name: '',
-    latitude: 58.002407, // Координаты по умолчанию (Пермь)
+    latitude: 58.002407,
     longitude: 56.260992,
     email: '',
     phone: '',
     workingHours: '',
     companyName: '',
   },
-  onLocationChange, // Колбэк изменения локации
-  onSave, // Колбэк сохранения
+  markers = [],
+  activeMarkerId,
+  onLocationChange,
+  onSave,
+  onMarkerClick,
 }) => {
-  // Мемоизация начальных данных формы, не дописал функционал мемоизации, доделать позже
   const initialFormData = useMemo(
     () => ({
+      id: initialData.id,
       name: initialData.name,
-      latitude: initialData.latitude.toString(), // Преобразование числа в строку
+      latitude: initialData.latitude.toString(),
       longitude: initialData.longitude.toString(),
       email: initialData.email,
       phone: initialData.phone,
       workingHours: initialData.workingHours,
       companyName: initialData.companyName,
     }),
-    [initialData], // Зависимость от initialData
+    [initialData],
   )
 
-  // Состояние данных формы
   const [formData, setFormData] = useState<MarkFormData>(initialFormData)
-  
-  // Состояние позиции маркера на карте [широта, долгота]
-  const [markerPosition, setMarkerPosition] = useState<[number, number]>([
-    initialData.latitude,
-    initialData.longitude,
-  ])
-  
-  // Состояние наличия несохраненных изменений
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-  // Эффект для сброса формы при изменении initialData
-  useEffect(() => {
-    setFormData(initialFormData) // Обновление данных формы
-    setMarkerPosition([initialData.latitude, initialData.longitude]) // Обновление позиции маркера
-    setHasUnsavedChanges(false) // Сброс флага изменений
-  }, [initialFormData, initialData.latitude, initialData.longitude]) // Зависимости
+  // Подготавливаем данные маркеров для карты
+  const mapMarkers = useMemo(() => {
+    if (!markers.length && initialData.id) {
+      // Если нет маркеров, но есть текущая метка, отображаем только ее
+      return [{
+        id: initialData.id,
+        position: [initialData.latitude, initialData.longitude] as [number, number],
+        title: initialData.name || 'Текущая метка'
+      }]
+    }
+    
+    return markers.map(marker => ({
+      ...marker,
+      position: marker.position
+    }))
+  }, [markers, initialData])
 
-  // Эффект для проверки изменений формы
+  useEffect(() => {
+    setFormData(initialFormData)
+    setHasUnsavedChanges(false)
+  }, [initialFormData])
+
   useEffect(() => {
     const changesExist =
-      JSON.stringify(initialFormData) !== JSON.stringify(formData) // Сравнение объектов через JSON
-    setHasUnsavedChanges(changesExist) // Установка флага изменений
-  }, [formData, initialFormData]) // Зависимости
+      JSON.stringify(initialFormData) !== JSON.stringify(formData)
+    setHasUnsavedChanges(changesExist)
+  }, [formData, initialFormData])
 
-  // Обработчик изменения полей ввода
   const handleInputChange = useCallback(
     (field: keyof MarkFormData, value: string) => {
       const newFormData = {
-        ...formData, // Копия текущих данных
-        [field]: value, // Обновление конкретного поля
+        ...formData,
+        [field]: value,
       }
-      setFormData(newFormData) // Обновление состояния
+      setFormData(newFormData)
 
-      // Если изменены координаты, обновляем маркер
       if (field === 'latitude' || field === 'longitude') {
         const lat =
           field === 'latitude'
-            ? parseFloat(value) // Преобразуем строку в число
+            ? parseFloat(value)
             : parseFloat(newFormData.latitude)
         const lng =
           field === 'longitude'
             ? parseFloat(value)
             : parseFloat(newFormData.longitude)
 
-        // Проверка на валидность чисел
         if (!isNaN(lat) && !isNaN(lng)) {
-          setMarkerPosition([lat, lng]) // Обновление позиции маркера
-          onLocationChange?.(lat, lng) // Вызов колбэка если передан
+          onLocationChange?.(lat, lng)
         }
       }
     },
-    [formData, onLocationChange], // Зависимости
+    [formData, onLocationChange],
   )
 
-  // Обработчик клика по карте
   const handleMapClick = useCallback(
     (lat: number, lng: number) => {
       setFormData((prev) => ({
         ...prev,
-        latitude: lat.toFixed(6), // Округление до 6 знаков после запятой
+        latitude: lat.toFixed(6),
         longitude: lng.toFixed(6),
       }))
-      setMarkerPosition([lat, lng]) // Обновление позиции маркера
-      onLocationChange?.(lat, lng) // Вызов колбэка
+      onLocationChange?.(lat, lng)
     },
-    [onLocationChange], // Зависимости
+    [onLocationChange],
   )
 
-  // Валидация координат
+  const handleMarkerClick = useCallback(
+    (markerId: string) => {
+      onMarkerClick?.(markerId)
+    },
+    [onMarkerClick]
+  )
+
   const validateCoordinates = () => {
-    const lat = parseFloat(formData.latitude) // Преобразование в число
+    const lat = parseFloat(formData.latitude)
     const lng = parseFloat(formData.longitude)
 
-    const isValidLat = !isNaN(lat) && lat >= -90 && lat <= 90 // Проверка диапазона широты
-    const isValidLng = !isNaN(lng) && lng >= -180 && lng <= 180 // Проверка диапазона долготы
+    const isValidLat = !isNaN(lat) && lat >= -90 && lat <= 90
+    const isValidLng = !isNaN(lng) && lng >= -180 && lng <= 180
 
-    return isValidLat && isValidLng // Возврат результата проверки
+    return isValidLat && isValidLng
   }
 
-//Валидация Email
-const validateEmail = (email: string): boolean => {
-  if (email === '') return true // Пустое поле допустимо
-  
-  // Поддержка латинских и русских букв
-  const emailRegex = /^[a-zA-Zа-яА-Я0-9._%+-]+@[a-zA-Zа-яА-Я0-9.-]+\.[a-zA-Zа-яА-Я]{2,}$/
-  return emailRegex.test(email)
-}
+  const validateEmail = (email: string): boolean => {
+    if (email === '') return true
+    
+    const emailRegex = /^[a-zA-Zа-яА-Я0-9._%+-]+@[a-zA-Zа-яА-Я0-9.-]+\.[a-zA-Zа-яА-Я]{2,}$/
+    return emailRegex.test(email)
+  }
 
-// Валидация номера телефона, никогда не писал регулярки, взято с инета
-const validatePhone = (phone: string): boolean => {
-  if (phone === '') return true // Пустое поле допустимо
-  return /^\+\d{11}$/.test(phone)
-}
+  const validatePhone = (phone: string): boolean => {
+    if (phone === '') return true
+    return /^\+\d{11}$/.test(phone)
+  }
 
-  // Обработчик "отправки" формы
   const handleSubmit = () => {
-  const isEmailValid = validateEmail(formData.email || '')
-  const isPhoneValid = validatePhone(formData.phone || '')
-  const isCoordsValid = validateCoordinates()
-  
-  if (isCoordsValid && isEmailValid && isPhoneValid && onSave) {
-    onSave(formData)
-    setHasUnsavedChanges(false)
+    const isEmailValid = validateEmail(formData.email || '')
+    const isPhoneValid = validatePhone(formData.phone || '')
+    const isCoordsValid = validateCoordinates()
+    
+    if (isCoordsValid && isEmailValid && isPhoneValid && onSave) {
+      onSave(formData)
+      setHasUnsavedChanges(false)
+    }
   }
-}
 
-  const isValidCoords = validateCoordinates() // Вычисление валидности координат
+  const isValidCoords = validateCoordinates()
 
   return (
-    <Container> {/* Контейнер для содержимого */}
-      <div className={styles.markForm }> {/* Основной контейнер формы */}
-        <div className={styles.markFormWrapper}> {/* Обертка для flex-расположения */}
-          <div className={styles.markColumn}> {/* Колонка с полями формы */}
-            <div className={styles.title}>Настройка Метки</div> {/* Заголовок */}
+    <Container>
+      <div className={styles.markForm}>
+        <div className={styles.markFormWrapper}>
+          <div className={styles.markColumn}>
+            <div className={styles.title}>Настройка Метки</div>
             
-            {/* Поле ввода названия */}
             <Input
               placeholder="Курьер №1"
               value={formData.name}
@@ -180,33 +191,31 @@ const validatePhone = (phone: string): boolean => {
               onChange={(e) => handleInputChange('name', e.target.value)}
             />
 
-            {/* Секция координат */}
             <div className={styles.coordinateSection}>
-              <div className={styles.coordinateRow}> {/* Строка для двух полей координат */}
-                <div className={styles.coordinateInput}> {/* Контейнер для поля широты */}
+              <div className={styles.coordinateRow}>
+                <div className={styles.coordinateInput}>
                   <Input
                     placeholder="58.002407"
                     value={formData.latitude}
                     onChange={(e) =>
                       handleInputChange('latitude', e.target.value)
                     }
-                    error={ // Отображение ошибки при невалидных данных
+                    error={
                       !isValidCoords && formData.latitude !== ''
                         ? 'От -90 до 90'
                         : undefined
                     }
                     label="Широта"
-                    
                   />
                 </div>
-                <div className={styles.coordinateInput}> {/* Контейнер для поля долготы */}
+                <div className={styles.coordinateInput}>
                   <Input
                     placeholder="56.260992"
                     value={formData.longitude}
                     onChange={(e) =>
                       handleInputChange('longitude', e.target.value)
                     }
-                    error={ // Отображение ошибки при невалидных данных
+                    error={
                       !isValidCoords && formData.longitude !== ''
                         ? 'От -180 до 180'
                         : undefined
@@ -217,37 +226,31 @@ const validatePhone = (phone: string): boolean => {
               </div>
             </div>
 
-            {/* Поле ввода email */}
             <Input
               placeholder="mail@example.com"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               type="email"
               label="Email"
-              // Добавляем параметр для отображения ошибки, если компонент Input его поддерживает
               error={formData.email && !validateEmail(formData.email) ? "Некорректный email" : undefined}
             />
 
-            {/* Поле ввода телефона */}
             <Input
               placeholder="Телефон +7(800)5553535"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              type="tel" // Указание типа для мобильных устройств
+              type="tel"
               label="Телефон"
               error={formData.phone && !validatePhone(formData.phone) ? "Некорректный номер" : undefined}
             />
 
-            {/* Поле ввода часов работы */}
             <Input
               placeholder="Пн-пт, 9:00 - 19:00"
               value={formData.workingHours}
-              onChange={(e) =>handleInputChange('workingHours', e.target.value)
-              }
+              onChange={(e) => handleInputChange('workingHours', e.target.value)}
               label="Часы работы"
             />
 
-            {/* Поле ввода названия компании */}
             <Input
               placeholder="ООО Название компании"
               value={formData.companyName}
@@ -255,26 +258,21 @@ const validatePhone = (phone: string): boolean => {
               label="Название Компании"
             />
 
-            {/* Футер формы с кнопкой и сообщениями */}
             <div className={styles.formFooter}>
-              {/* Кнопка сохранения */}
               <Button
-                
-                disabled={!isValidCoords || !hasUnsavedChanges} // Блокировка при невалидных данных или отсутствии изменений
+                disabled={!isValidCoords || !hasUnsavedChanges}
                 onClick={handleSubmit}
                 className={styles.saveButton}
               >
                 Сохранить Метку
               </Button>
 
-              {/* Сообщение о сохраненных изменениях */}
               {!hasUnsavedChanges && isValidCoords && (
                 <div className={styles.savedMessage}>
                   Все изменения сохранены
                 </div>
               )}
 
-              {/* Индикатор несохраненных изменений */}
               {hasUnsavedChanges && (
                 <div className={styles.unsavedIndicator}>
                   Есть несохраненные изменения
@@ -283,15 +281,18 @@ const validatePhone = (phone: string): boolean => {
             </div>
           </div>
 
-          {/* Колонка с картой */}
           <div className={styles.mapWrapper}>
             <div className={styles.mapContainer}>
-              {/* Динамически загружаемый компонент карты */}
               <MapComponent
-                markerPosition={markerPosition} // Позиция маркера
-                onMapClick={handleMapClick} // Обработчик клика по карте
-                zoom={15} // Уровень приближения
+                markers={mapMarkers}
+                activeMarkerId={activeMarkerId}
+                onMapClick={handleMapClick}
+                onMarkerClick={handleMarkerClick}
+                zoom={15}
               />
+            </div>
+            <div className={styles.mapHint}>
+              Кликните по карте для изменения координат или по метке для выбора
             </div>
           </div>
         </div>

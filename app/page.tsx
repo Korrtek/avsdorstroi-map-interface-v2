@@ -16,13 +16,11 @@ interface MarkData {
   workingHours: string
   companyName: string
 }
-// Данные решил хранить в localStorage, без создания бэка
-// По этому ключу будет сохраняться форма в localStorage
+
 const STORAGE_KEY = 'map-marks-data'
 
 const loadMarksFromStorage = (): MarkData[] => {
   if (typeof window === 'undefined') return []
-
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     return saved ? JSON.parse(saved) : []
@@ -34,7 +32,6 @@ const loadMarksFromStorage = (): MarkData[] => {
 
 const saveMarksToStorage = (marks: MarkData[]) => {
   if (typeof window === 'undefined') return
-
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(marks))
   } catch (error) {
@@ -43,24 +40,25 @@ const saveMarksToStorage = (marks: MarkData[]) => {
 }
 
 export default function Home() {
-  
   const [marks, setMarks] = useState<MarkData[]>([])
   const [activeMarkId, setActiveMarkId] = useState<string | null>(null)
 
-  // Загрузка данных из localStorage при монтировании
   useEffect(() => {
     const loadedMarks = loadMarksFromStorage()
     setMarks(loadedMarks)
-
     if (loadedMarks.length > 0) {
       setActiveMarkId(loadedMarks[0].id)
     }
   }, [])
 
-  // Находим активную метку
   const activeMark = marks.find((mark) => mark.id === activeMarkId) || null
 
-  // Создание новой метки
+  const mapMarkers = marks.map(mark => ({
+    id: mark.id,
+    position: [mark.latitude, mark.longitude] as [number, number],
+    title: mark.title || mark.name || 'Без названия'
+  }))
+
   const handleCreateMark = () => {
     const newMarkId = Date.now().toString()
     const newMark: MarkData = {
@@ -75,72 +73,62 @@ export default function Home() {
       companyName: '',
     }
 
-    setMarks((prev) => [...prev, newMark])
+    const updatedMarks = [...marks, newMark]
+    setMarks(updatedMarks)
     setActiveMarkId(newMarkId)
+    saveMarksToStorage(updatedMarks)
   }
 
-  // Обновление данных метки
   const handleUpdateMark = (id: string, data: Partial<MarkData>) => {
-    setMarks((prev) =>
-      prev.map((mark) => {
-        if (mark.id === id) {
-          const updatedMark = { ...mark, ...data }
-          return updatedMark
-        }
-        return mark
-      }),
-    )
-  }
-
-  // Удаление метки
-  const handleDeleteMark = (id: string) => {
-    setMarks((prev) => {
-      const newMarks = prev.filter((mark) => mark.id !== id)
-      return newMarks
-    })
-
-    setActiveMarkId((prev) => {
-      if (prev === id) {
-        const remainingMarks = marks.filter((mark) => mark.id !== id)
-        return remainingMarks.length > 0 ? remainingMarks[0].id : null
-      }
-      return prev
-    })
-  }
-
-  // Обновление названия метки в пресете
-  const handleMarkTitleChange = (id: string, newTitle: string) => {
-    setMarks((prev) =>
-      prev.map((mark) => {
-        if (mark.id === id) {
-          return {
-            ...mark,
-            title: newTitle,
-            name: newTitle, // Также обновляем поле name для формы
+    const updatedMarks = marks.map((mark) => {
+      if (mark.id === id) {
+        const updatedMark = { ...mark, ...data }
+        // Если меняем координаты и нет названия, создаем дефолтное
+        if (data.latitude !== undefined || data.longitude !== undefined) {
+          if (!updatedMark.name && !updatedMark.title) {
+            updatedMark.title = `Метка ${id.slice(-4)}`
           }
         }
-        return mark
-      }),
-    )
+        return updatedMark
+      }
+      return mark
+    })
+    
+    setMarks(updatedMarks)
+    saveMarksToStorage(updatedMarks)
   }
 
+  const handleDeleteMark = (id: string) => {
+    const newMarks = marks.filter((mark) => mark.id !== id)
+    setMarks(newMarks)
+    saveMarksToStorage(newMarks)
 
-// автосейв координат метки
- useEffect(() => {
-    if (marks.length > 0) {
-      saveMarksToStorage(marks)
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
+    if (activeMarkId === id) {
+      setActiveMarkId(newMarks.length > 0 ? newMarks[0].id : null)
     }
-  }, [marks])
+  }
 
+  const handleMarkTitleChange = (id: string, newTitle: string) => {
+    const updatedMarks = marks.map((mark) => {
+      if (mark.id === id) {
+        return {
+          ...mark,
+          title: newTitle,
+          name: newTitle,
+        }
+      }
+      return mark
+    })
+    
+    setMarks(updatedMarks)
+    saveMarksToStorage(updatedMarks)
+  }
 
-
-
-  // Сохранение данных из формы по кнопке 
+  // ОСНОВНОЙ ИСПРАВЛЕННЫЙ ОБРАБОТЧИК СОХРАНЕНИЯ
   const handleSaveMark = (formData: MarkFormData) => {
     if (activeMarkId) {
-      handleUpdateMark(activeMarkId, {
+      // Преобразуем данные формы в формат MarkData
+      const updatedMarkData: Partial<MarkData> = {
         name: formData.name,
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude),
@@ -148,32 +136,56 @@ export default function Home() {
         phone: formData.phone,
         workingHours: formData.workingHours,
         companyName: formData.companyName,
+      }
+
+      // Обновляем метку в состоянии
+      const updatedMarks = marks.map((mark) => {
+        if (mark.id === activeMarkId) {
+          const updatedMark = { 
+            ...mark, 
+            ...updatedMarkData,
+            // Обновляем title если меняется name и title совпадает с name
+            title: formData.name || mark.title || `Метка ${activeMarkId.slice(-4)}`
+          }
+          return updatedMark
+        }
+        return mark
       })
 
-      // Обновляем title если меняется name
-      if (formData.name) {
-        handleMarkTitleChange(activeMarkId, formData.name)
-      }
+      setMarks(updatedMarks)
+      saveMarksToStorage(updatedMarks)
+
+      console.log('Сохранена метка:', {
+        id: activeMarkId,
+        ...updatedMarkData
+      })
     }
   }
 
-
-  // Очистка всех меток
-    const handleClearAllMarks = () => {
-    // Запрашиваем подтверждение у пользователя
-    const isConfirmed = window.confirm('Удалить все метки?')
-    
-    if (!isConfirmed) {
-      return
+  const handleLocationChange = (lat: number, lng: number) => {
+    if (activeMarkId) {
+      handleUpdateMark(activeMarkId, {
+        latitude: lat,
+        longitude: lng,
+      })
     }
-    localStorage.removeItem(STORAGE_KEY)
+  }
+
+  const handleMarkerClick = (markerId: string) => {
+    setActiveMarkId(markerId)
+  }
+
+  const handleClearAllMarks = () => {
+    const isConfirmed = window.confirm('Удалить все метки?')
+    if (!isConfirmed) return
+    
     setMarks([])
     setActiveMarkId(null)
+    localStorage.removeItem(STORAGE_KEY)
   }
 
   return (
     <div>
-      {/* <Header/> */}
       <div className={styles.page}>
         <MarkManager
           marks={marks.map((mark) => ({
@@ -193,6 +205,7 @@ export default function Home() {
           <MarkForm
             key={activeMark.id}
             initialData={{
+              id: activeMark.id,
               name: activeMark.name,
               latitude: activeMark.latitude,
               longitude: activeMark.longitude,
@@ -200,24 +213,18 @@ export default function Home() {
               phone: activeMark.phone,
               workingHours: activeMark.workingHours,
               companyName: activeMark.companyName,
-              
             }}
+            markers={mapMarkers}
+            activeMarkerId={activeMarkId}
             onSave={handleSaveMark}
-            
-            onLocationChange={(lat, lng) => {
-              if (activeMarkId) {
-                handleUpdateMark(activeMarkId, {
-                  latitude: lat,
-                  longitude: lng,
-                })
-              }
-            }}
+            onLocationChange={handleLocationChange}
+            onMarkerClick={handleMarkerClick}
           />
         )}
-      {/* Если нет пресетов рендерится */}
+
         {marks.length === 0 && (
           <div className={styles.emptyState}>
-            <p>Нет сохраненных меток Создайте первую метку</p>
+            <p>Нет сохраненных меток. Создайте первую метку</p>
             <svg
               width="100"
               height="100"
