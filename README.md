@@ -1,5 +1,5 @@
 
-Для просмотра посетите [[https://avsdorstroi-map-interface.vercel.app/](https://avsdorstroi-map-interface-v2.vercel.app/)](https://avsdorstroi-map-interface-v2.vercel.app/)
+Для просмотра посетите https://avsdorstroi-map-interface-v2.vercel.app/
 Начало работы
 Сначала запустите сервер разработки:
 ```bash
